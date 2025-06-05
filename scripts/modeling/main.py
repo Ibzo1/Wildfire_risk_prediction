@@ -1,8 +1,14 @@
-from model_evaluation.model_lossfunctions import binary_cross_entropy_loss as bce_loss
+from model_evaluation.model_lossfunctions import mean_squared_error_loss as mse_loss
 from model_classes.lstm import LSTM_3D
 from data_preprocessing.windowing import batched_indexed_windows, reshape_data
 
-from model_evaluation.nn_model_metrics import evaluate, calculate_metrics, create_empty_metrics_dict
+from model_evaluation.nn_model_metrics import (
+    evaluate,
+    calculate_metrics,
+    create_empty_metrics_dict,
+    calculate_regression_metrics,
+    create_empty_regression_dict,
+)
 from visualize import set_colour_scheme, plot_target_vs_predictions
 from common import get_indices
 
@@ -229,10 +235,10 @@ def main(parameter_set_key: str = 'default',
                 outputs = model(inputs)
 
                 # calculate losses
-                full_loss = bce_loss(outputs, targets)
+                full_loss = mse_loss(outputs, targets)
                 # TODO figure out why fire_loss is getting so big
-                fire_loss = bce_loss(outputs * targets, targets)
-                region_loss = bce_loss(outputs * regions, targets)
+                fire_loss = mse_loss(outputs * targets, targets)
+                region_loss = mse_loss(outputs * regions, targets)
                 loss = (full_loss * 0.2) + (region_loss * 0.8)
                 print(
                     f"Scaled Loss: {loss}, Fire_Region Loss: {region_loss}, Fire Loss: {fire_loss}, Full Loss: {full_loss}")
@@ -426,9 +432,9 @@ def main(parameter_set_key: str = 'default',
                                                                      batch_flat_shape_val, 0.70, metrics_fire_070)
 
                             # calculate losses
-                            full_test_loss = bce_loss(test_predictions, test_targets)
-                            fire_test_loss = bce_loss(test_predictions * test_targets, test_targets)
-                            fire_test_region_loss = bce_loss(test_predictions * test_regions, test_targets)
+                            full_test_loss = mse_loss(test_predictions, test_targets)
+                            fire_test_loss = mse_loss(test_predictions * test_targets, test_targets)
+                            fire_test_region_loss = mse_loss(test_predictions * test_regions, test_targets)
                             test_loss = (full_test_loss * 0.2) + (fire_test_region_loss * 0.8)
 
                             # update total losses
@@ -443,14 +449,14 @@ def main(parameter_set_key: str = 'default',
                             f"Validation Batch Accuracy: {metrics['validation_accuracy']}, Precision: {metrics['validation_precision']}, Recall: {metrics['validation_recall']}, F1: {metrics['validation_f1']}")
 
                         # create metrics dictionary for tensorboard
-                        metrics_dict = {"training_scaled_bce_loss": loss.item(),
-                                        "training_full_bce_loss": full_loss.item(),
+                        metrics_dict = {"training_scaled_mse_loss": loss.item(),
+                                        "training_full_mse_loss": full_loss.item(),
                                         "training_fire_loss": fire_loss.item(),
                                         "training_fire_region_loss": region_loss.item(),
-                                        "validation_scaled_bce_loss": val_scaled_loss.item(),
-                                        "validation_fire_bce_loss": val_fire_loss.item(),
-                                        "validation_fire_region_bce_loss": val_fire_region_loss.item(),
-                                        "validation_full_region_bce_loss": val_full_loss.item(),
+                                        "validation_scaled_mse_loss": val_scaled_loss.item(),
+                                        "validation_fire_mse_loss": val_fire_loss.item(),
+                                        "validation_fire_region_mse_loss": val_fire_region_loss.item(),
+                                        "validation_full_region_mse_loss": val_full_loss.item(),
                                         "train_accuracy_0515": train_metrics_dict["accuracy"],
                                         "train_precision_0515": train_metrics_dict["precision"],
                                         "train_recall_0515": train_metrics_dict["recall"],

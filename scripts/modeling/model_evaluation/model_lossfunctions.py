@@ -1,6 +1,7 @@
 import torch.nn as nn
 
 
+
 def binary_cross_entropy_loss(output, target):
     """
 
@@ -23,4 +24,11 @@ def binary_cross_entropy_loss(output, target):
     bceloss = criterion(output, target)
 
     return bceloss
+
+
+def mean_squared_error_loss(output, target):
+    """Calculate and return mean squared error loss for regression targets."""
+    criterion = nn.MSELoss()
+    return criterion(output, target)
+
 
