@@ -225,10 +225,6 @@ Contributions are welcome! Please feel free to submit issues or pull requests.
 
 This project is licensed under the terms specified in the [LICENSE](LICENSE) file.
 
-## 👤 Author
-
-**Ibzo1**
-- GitHub: [@Ibzo1](https://github.com/Ibzo1)
 
 ## 🙏 Acknowledgments
 
@@ -243,3 +239,4 @@ For questions or collaboration opportunities, please open an issue on GitHub.
 ---
 
 **Note**: This project is under active development. Features and documentation may change.
+
