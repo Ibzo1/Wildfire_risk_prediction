@@ -1,4 +1,13 @@
-from sklearn.metrics import accuracy_score, precision_score, recall_score,f1_score, roc_auc_score
+from sklearn.metrics import (
+    accuracy_score,
+    precision_score,
+    recall_score,
+    f1_score,
+    mean_squared_error,
+    mean_absolute_error,
+    roc_auc_score,
+)
+import numpy as np
 
 
 def calculate_metrics(predictions, targets, flat_shape, threshold_value, metrics_dict):
@@ -18,11 +27,24 @@ def calculate_metrics(predictions, targets, flat_shape, threshold_value, metrics
     return metrics_dict
 
 
+def calculate_regression_metrics(predictions, targets):
+    """Return RMSE and MAE for continuous predictions."""
+    pred = predictions.detach().cpu().numpy().reshape(-1)
+    true = targets.detach().cpu().numpy().reshape(-1)
+    rmse = np.sqrt(mean_squared_error(true, pred))
+    mae = mean_absolute_error(true, pred)
+    return {"rmse": rmse, "mae": mae}
+
+
 def create_empty_metrics_dict():
     metrics_dict = {'validation_accuracy': 0, 'validation_precision': 0, 'validation_recall': 0, 'validation_f1': 0,
                     'validation_avg_min_pred': 0, 'validation_avg_max_pred': 0, 'validation_avg_pred': 0}
 
     return metrics_dict
+
+
+def create_empty_regression_dict():
+    return {"rmse": 0.0, "mae": 0.0}
 
 
 # TODO: troubleshoot roc_auc_score
@@ -112,3 +134,13 @@ def evaluate_individuals(predictions, targets, flat_shape, threshold_value=0.515
     f1 = f1_score(targets_flat.astype(int), thresholded_predictions_flat)
 
     return accuracy, precision, recall, f1
+
+
+__all__ = [
+    "calculate_metrics",
+    "create_empty_metrics_dict",
+    "calculate_regression_metrics",
+    "create_empty_regression_dict",
+    "evaluate",
+    "evaluate_individuals",
+]

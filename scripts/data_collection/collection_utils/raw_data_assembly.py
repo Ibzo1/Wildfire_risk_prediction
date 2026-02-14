@@ -4,6 +4,7 @@ import datetime as dt
 import os
 import time
 import logging
+from scripts.data_processing.fire_aura import generate_fire_aura
 # from oapi_pipeline.human_activity_pipeline import HumanActivityPipeline as hap
 
 # Configure logging
@@ -58,6 +59,42 @@ class RawDataAssembler:
 
         # Initialize the variable to store the assembled parameters
         self.dataset = None
+
+    def _generate_fire_aura_targets(self, df, sigma=3.0):
+        """Add a continuous fire aura column using ignition locations."""
+        if df is None or df.empty:
+            return df
+
+        latitudes = sorted(df["latitude"].unique())
+        longitudes = sorted(df["longitude"].unique())
+        lat_idx = {lat: i for i, lat in enumerate(latitudes)}
+        lon_idx = {lon: j for j, lon in enumerate(longitudes)}
+
+        grid_shape = (len(latitudes), len(longitudes))
+
+        df["fire_aura"] = 0.0
+
+        for date, group in df.groupby("date"):
+            fires = self.fire_dates[
+                self.fire_dates["fire_start_date"] == pd.to_datetime(date).date()
+            ]
+            if fires.empty:
+                continue
+
+            fire_coords = []
+            for _, fire in fires.iterrows():
+                closest_lat = min(latitudes, key=lambda x: abs(x - fire["fire_location_latitude"]))
+                closest_lon = min(longitudes, key=lambda x: abs(x - fire["fire_location_longitude"]))
+                fire_coords.append((lat_idx[closest_lat], lon_idx[closest_lon]))
+
+            aura = generate_fire_aura(fire_coords, grid_shape, sigma=sigma)
+
+            for idx, row in group.iterrows():
+                i = lat_idx[row["latitude"]]
+                j = lon_idx[row["longitude"]]
+                df.at[idx, "fire_aura"] = aura[i, j]
+
+        return df
 
     def assemble_dataset(self, pipelines):
         """
@@ -188,6 +225,9 @@ class RawDataAssembler:
                                                 on=['date', 'latitude', 'longitude'], how='outer')
             else:
                 monthly_data = None
+
+            if monthly_data is not None:
+                monthly_data = self._generate_fire_aura_targets(monthly_data)
 
             logger.info(f"Final data shape for {period_key}: {monthly_data.shape if monthly_data is not None else 'No data'}")
 
